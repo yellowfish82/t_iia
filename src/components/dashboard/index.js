@@ -4,7 +4,6 @@ import {
     VideoCameraOutlined,
 } from '@ant-design/icons';
 import { Divider, Spin, message, Row, Col, Card, Statistic, Input, Button } from 'antd';
-import ReactMarkdown from 'react-markdown/with-html';
 
 import hub from '../../utilities/hub';
 
