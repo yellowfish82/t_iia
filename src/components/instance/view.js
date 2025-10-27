@@ -32,7 +32,7 @@ class AMInstanceView extends React.Component {
         // console.log(rtData);
         const ot = this.assembleRTData(rtData.ot);
         const { alertData } = await hub.queryAlertData(JSON.stringify({ thing_id: this.props.info.id }));
-        const ad = alertData.map((ad) => {
+        const ad = alertData.result.map((ad) => {
             const payload = JSON.parse(ad.payload);
             let expressionMark = '';
             switch (ad.expression) {

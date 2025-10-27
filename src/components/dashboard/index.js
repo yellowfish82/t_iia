@@ -89,27 +89,6 @@ class AMDashboard extends React.Component {
                         </Card>
                     </Col>
                 </Row>
-
-                <Row gutter={16}>
-                    <Col span={12}>
-                        <TextArea
-                            onChange={(e) => this.setValue(e.target.value)}
-                            placeholder="Controlled autosize"
-                            autoSize={{
-                                minRows: 3,
-                                maxRows: 5,
-                            }}
-                        />
-                        <Divider>使用前确认本地已运行Ollama</Divider>
-                        <Button onClick={this.chat}>提问LLM</Button>
-                    </Col>
-                    <Col span={12}>
-                        <p>Ollama Robot</p>
-                        <Divider />
-                        {this.state.chat_loading ? <Spin /> : <div dangerouslySetInnerHTML={this.state.ollama_chat} />}
-                    </Col>
-                </Row>
-
             </div>
         )
 
