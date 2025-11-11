@@ -1,5 +1,5 @@
 import React from "react";
-import './am.css';
+import './t.css';
 
 import {
     MenuFoldOutlined,
@@ -17,7 +17,7 @@ import hub from '../utilities/hub';
 
 const { Header, Content, Footer, Sider } = Layout;
 
-class ArcelorMittal extends React.Component {
+class TIIoT extends React.Component {
     constructor(props) {
         super(props);
 
@@ -60,7 +60,7 @@ class ArcelorMittal extends React.Component {
 
     async componentDidMount() {
         try {
-            message.success('ArcelorMittal IIoT平台欢迎您！');
+            message.success('TIIoT IIoT平台欢迎您！');
             const { page, breadcrumb } = this.navMap[this.state.items[0].key];
             this.setState({ loading: false, collapsed: false, page, breadcrumb });
 
@@ -157,7 +157,7 @@ class ArcelorMittal extends React.Component {
                     }}
                     >
 
-                        <h1 style={{ textAlign: "center", backgroundColor: '#ffffff', margin: '16px 0' }}>Arcelor Mittal IIoT 演示</h1>
+                        <h1 style={{ textAlign: "center", backgroundColor: '#ffffff', margin: '16px 0' }}>IIoT一体机演示平台</h1>
                     </Header>
 
 
@@ -180,7 +180,7 @@ class ArcelorMittal extends React.Component {
                             textAlign: 'center',
                         }}
                     >
-                        Arcelor Mittal Demo ©{new Date().getFullYear()} Created by Terry
+                        Terry IIoT Demo ©{new Date().getFullYear()} Created by Terry
                     </Footer>
                 </Layout>
             </Layout>
@@ -199,4 +199,4 @@ class ArcelorMittal extends React.Component {
 
 }
 
-export default ArcelorMittal;
+export default TIIoT;

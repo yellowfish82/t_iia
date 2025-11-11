@@ -1,11 +1,11 @@
 import './App.css';
 
-import ArcelorMittal from './components/am';
+import TIIoT from './components/t';
 
 function App() {
   return (
     <div className="App">
-      <ArcelorMittal />
+      <TIIoT />
     </div>
   );
 }
