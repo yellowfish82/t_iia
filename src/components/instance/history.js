@@ -17,12 +17,12 @@ class TIIoTHistory extends React.Component {
         try {
             this.setState({ loading: true });
             const { thing_id, property } = this.props.info;
-            console.log(this.props.info);
+            // console.log(this.props.info);
             const { otData } = await hub.queryHistoryData(JSON.stringify({
                 thing_id
             }));
 
-            console.log(otData);
+            // console.log(otData);
             const xData = [];
             const yData = [];
 
