@@ -116,12 +116,22 @@ class AMModelList extends React.Component {
                                 <List.Item>
                                     <Card title={item.name}>
                                         <ul>
-                                            <li>
-                                                最大值：{item.max}
-                                            </li>
-                                            <li>
-                                                最小值：{item.min}
-                                            </li>
+                                            {item.type ? (
+                                                <li>
+                                                    类型：{CONSTANT.PROPERTY_TYPE[item.type] ? 
+                                                        `${CONSTANT.PROPERTY_TYPE[item.type].label} (${CONSTANT.PROPERTY_TYPE[item.type].unit})` : 
+                                                        item.type}
+                                                </li>
+                                            ) : (
+                                                <>
+                                                    <li>
+                                                        最大值：{item.max}
+                                                    </li>
+                                                    <li>
+                                                        最小值：{item.min}
+                                                    </li>
+                                                </>
+                                            )}
                                         </ul>
                                     </Card>
                                 </List.Item>
@@ -141,8 +151,9 @@ class AMModelList extends React.Component {
                                 console.log(curModel);
                                 const property = curModel.properties.find(p => p.id === item.property_id);
 
+                                const expression = parseInt(item.expression);
                                 let expressionMark = '';
-                                switch (item.expression) {
+                                switch (expression) {
                                     case CONSTANT.CONDITION_EXPRESSION.LARGER:
                                         expressionMark = '>';
                                         break;
@@ -163,8 +174,19 @@ class AMModelList extends React.Component {
 
                                 return (
                                     <List.Item>
-                                        <Card title={property.name}>
-                                            {expressionMark}{item.threshold}
+                                        <Card title={property ? property.name : '未知属性'}>
+                                            <div>
+                                                {property && property.type ? (
+                                                    <div>
+                                                        <p>属性类型: {CONSTANT.PROPERTY_TYPE[property.type] ? 
+                                                            `${CONSTANT.PROPERTY_TYPE[property.type].label} (${CONSTANT.PROPERTY_TYPE[property.type].unit})` : 
+                                                            property.type}
+                                                        </p>
+                                                        <Divider />
+                                                    </div>
+                                                ) : null}
+                                                <p>报警条件: {expressionMark} {item.threshold}</p>
+                                            </div>
                                         </Card>
                                     </List.Item>
                                 );
