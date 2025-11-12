@@ -9,7 +9,7 @@ const layout = {
     wrapperCol: { span: 12 },
 };
 
-class AMModelCreate extends React.Component {
+class TIIoTModelCreate extends React.Component {
     formRef = React.createRef();
 
     constructor(props) {
@@ -30,7 +30,7 @@ class AMModelCreate extends React.Component {
     }
 
     back = () => {
-        this.props.nav('AMModelList');
+        this.props.nav('TIIoTModelList');
     }
 
     execute = async (values) => {
@@ -389,4 +389,4 @@ class AMModelCreate extends React.Component {
 
 }
 
-export default AMModelCreate;
+export default TIIoTModelCreate;

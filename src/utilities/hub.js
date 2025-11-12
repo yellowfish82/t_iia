@@ -156,6 +156,52 @@ const chatWithOllama = async (info) => {
     return utils.handleHttpResponse(resp);
 }
 
+const sfoc = async (id) => {
+    let url = `${CONSTANT.WEB_SERVER_URL}/${CONSTANT.VERSION}${CONSTANT.ANALYSIS_SFOC}`;
+    const options = {
+        method: 'POST',
+        url,
+        data: {
+            id
+        }
+    }
+
+    const resp = await utils.invokeWebServer(options);
+    // console.log(resp);
+
+    return utils.handleHttpResponse(resp);
+}
+
+const kmeans = async (id) => {
+    let url = `${CONSTANT.WEB_SERVER_URL}/${CONSTANT.VERSION}${CONSTANT.ANALYSIS_K_MEANS}`;
+    const options = {
+        method: 'POST',
+        url,
+        data: {
+            id
+        }
+    }
+
+    const resp = await utils.invokeWebServer(options);
+    // console.log(resp);
+
+    return utils.handleHttpResponse(resp);
+}
+
+const vesselHealthIndex = async (data) => {
+    let url = `${CONSTANT.WEB_SERVER_URL}/${CONSTANT.VERSION}${CONSTANT.ANALYSIS_VESSEL_HEALTH_INDEX}`;
+    const options = {
+        method: 'POST',
+        url,
+        data
+    }
+
+    const resp = await utils.invokeWebServer(options);
+    // console.log(resp);
+
+    return utils.handleHttpResponse(resp);
+}
+
 module.exports = {
     queryModels,
     getModel,
@@ -168,4 +214,7 @@ module.exports = {
     queryAlertData,
     invokeOllama,
     chatWithOllama,
+    sfoc,
+    kmeans,
+    vesselHealthIndex,
 };

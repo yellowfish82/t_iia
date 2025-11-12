@@ -6,9 +6,10 @@ import {
 import { Divider, Spin, message, Row, Col, Card, Statistic, Input, Button } from 'antd';
 
 import hub from '../../utilities/hub';
+import VesselHealthIndex from '../analysis/VesselHealthIndex';
 
 const { TextArea } = Input;
-class AMDashboard extends React.Component {
+class TIIoTDashboard extends React.Component {
     constructor(props) {
         super(props);
         this.state = { loading: true, ollama_chat: '' };
@@ -89,6 +90,9 @@ class AMDashboard extends React.Component {
                         </Card>
                     </Col>
                 </Row>
+                
+                <Divider>船舶健康监测</Divider>
+                <VesselHealthIndex />
             </div>
         )
 
@@ -105,4 +109,4 @@ class AMDashboard extends React.Component {
 
 }
 
-export default AMDashboard;
+export default TIIoTDashboard;

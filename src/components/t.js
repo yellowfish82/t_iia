@@ -10,8 +10,8 @@ import {
 } from '@ant-design/icons';
 import { Breadcrumb, Layout, Menu, Button, Spin, message } from 'antd';
 
-import AMBreadcrumb from './structure/breadcrumb';
-import AMContent from './structure/content';
+import TIIoTBreadcrumb from './structure/breadcrumb';
+import TIIoTContent from './structure/content';
 
 import hub from '../utilities/hub';
 
@@ -44,15 +44,15 @@ class TIIoT extends React.Component {
 
         this.navMap = {
             dashboard: {
-                page: 'AMDashboard',
+                page: 'TIIoTDashboard',
                 breadcrumb: ['看板']
             },
             model: {
-                page: 'AMModel',
+                page: 'TIIoTModel',
                 breadcrumb: ['物模型']
             },
             instance: {
-                page: 'AMInstance',
+                page: 'TIIoTInstance',
                 breadcrumb: ['物实例']
             },
         }
@@ -161,7 +161,7 @@ class TIIoT extends React.Component {
                     </Header>
 
 
-                    <AMBreadcrumb breadcrumb={breadcrumb} />
+                    <TIIoTBreadcrumb breadcrumb={breadcrumb} />
 
                     <Content
                         style={{
@@ -172,7 +172,7 @@ class TIIoT extends React.Component {
                             background: '#ffffff'
                         }}
                     >
-                        <AMContent page={page} setBreadcrumb={this.setBreadcrumb} />
+                        <TIIoTContent page={page} setBreadcrumb={this.setBreadcrumb} />
                     </Content>
 
                     <Footer

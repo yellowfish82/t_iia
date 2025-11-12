@@ -2,17 +2,17 @@ import React from "react";
 
 
 import ComingSoon from '../comming';
-import AMDashboard from '../dashboard';
-import AMModel from '../model';
-import AMInstance from '../instance';
+import TIIoTDashboard from '../dashboard';
+import TIIoTModel from '../model';
+import TIIoTInstance from '../instance';
 
-class AMContent extends React.Component {
+class TIIoTContent extends React.Component {
     constructor(props) {
         super(props);
         this.pages = {
-            AMDashboard: (<AMDashboard />),
-            AMModel: (<AMModel setBreadcrumb={this.props.setBreadcrumb} />),
-            AMInstance: (<AMInstance setBreadcrumb={this.props.setBreadcrumb} />),
+            TIIoTDashboard: (<TIIoTDashboard />),
+            TIIoTModel: (<TIIoTModel setBreadcrumb={this.props.setBreadcrumb} />),
+            TIIoTInstance: (<TIIoTInstance setBreadcrumb={this.props.setBreadcrumb} />),
         }
     }
 
@@ -28,7 +28,7 @@ class AMContent extends React.Component {
     }
 
     render() {
-        // console.log('AMContent', this.props.page);
+        // console.log('TIIoTContent', this.props.page);
         const page = this.renderPage();
 
         return (
@@ -40,4 +40,4 @@ class AMContent extends React.Component {
 
 }
 
-export default AMContent;
+export default TIIoTContent;

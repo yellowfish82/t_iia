@@ -4,7 +4,7 @@ import { Button, Divider, message, Table, Space, Drawer, Card, List } from 'antd
 import hub from '../../utilities/hub';
 import CONSTANT from '../../utilities/constant';
 
-class AMModelList extends React.Component {
+class TIIoTModelList extends React.Component {
     constructor(props) {
         super(props);
         this.state = { loading: true };
@@ -42,7 +42,7 @@ class AMModelList extends React.Component {
 
     async componentDidMount() {
         try {
-            // console.log(`AMModelList componentDidMount`);
+            // console.log(`TIIoTModelList componentDidMount`);
             await this.query();
         } catch (error) {
             console.log(error);
@@ -92,7 +92,7 @@ class AMModelList extends React.Component {
     closeAlertConditions = () => this.setState({ showAlertConditions: false });
 
     add = () => {
-        this.props.nav('AMModelCreate');
+        this.props.nav('TIIoTModelCreate');
     }
 
     renderPage = () => {
@@ -210,4 +210,4 @@ class AMModelList extends React.Component {
 
 }
 
-export default AMModelList;
+export default TIIoTModelList;

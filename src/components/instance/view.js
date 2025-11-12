@@ -1,17 +1,23 @@
 import React from "react";
-import { Button, Divider, message, Spin, Card, List, Timeline } from 'antd';
+import { Button, Divider, message, Spin, Card, List, Timeline, Tabs } from 'antd';
 
 import hub from '../../utilities/hub';
 import tools from '../../utilities/tools';
 import CONSTANT from '../../utilities/constant';
 
-import AMHistory from './history';
+import TIIoTHistory from './history';
+import SfocAnalysis from '../analysis/SfocAnalysis';
+import KmeansAnalysis from '../analysis/KmeansAnalysis';
 const moment = require('moment');
 
-class AMInstanceView extends React.Component {
+class TIIoTInstanceView extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { loading: true, showHistorydata: false, };
+        this.state = { 
+            loading: true, 
+            showHistorydata: false,
+            activeTab: 'realtime'
+        };
         this.timer = undefined;
     }
 
@@ -104,7 +110,7 @@ class AMInstanceView extends React.Component {
 
     back = () => {
         this.clearTimer();
-        this.props.nav('AMInstanceList');
+        this.props.nav('TIIoTInstanceList');
     }
 
     viewHistory = (property) => this.viewNav(true, property);
@@ -128,25 +134,32 @@ class AMInstanceView extends React.Component {
         this.setState({ showHistorydata, property });
     }
 
-    renderPage = () => {
-        const { loading, showHistorydata, ot, alertData, property } = this.state;
-        // console.log(`====================================== item: ${JSON.stringify(ot)}`);
-
-        if (showHistorydata) {
-            return (
-                <AMHistory viewNav={this.viewNav} info={{ property, thing_id: this.props.info.id }} />
-            )
+    // Tab切换处理
+    onTabChange = (activeKey) => {
+        this.setState({ activeTab: activeKey });
+        
+        // 如果切换到分析tab，停止定时器
+        if (activeKey === 'sfoc' || activeKey === 'kmeans') {
+            this.clearTimer();
+        } else if (activeKey === 'realtime') {
+            // 切换回实时数据时，重新启动定时器
+            this.clearTimer();
+            this.timer = setInterval(async () => {
+                try {
+                    await this.query();
+                } catch (error) {
+                    console.error(error);
+                    message.error(`${error}`);
+                }
+            }, CONSTANT.REFRESH_FREQUENCY);
         }
+    }
 
+    // 渲染实时数据内容
+    renderRealtimeContent = (loading, ot, alertData) => {
         return (
             <div>
-                <h2>查看设备</h2>
-                <Divider />
-                <Button onClick={this.back}>返回</Button>
                 {loading ? <Spin /> : null}
-
-                {/* <Button onClick={this.viewHistory}>历史记录</Button> */}
-
                 <Divider>实时数据</Divider>
                 <List
                     grid={{
@@ -155,8 +168,6 @@ class AMInstanceView extends React.Component {
                     }}
                     dataSource={ot}
                     renderItem={(item) => {
-                        // console.log(`====================================== item: ${JSON.stringify(item)}`);
-
                         return (
                             <List.Item>
                                 <Card title={item.k} style={{ cursor: 'pointer' }} onClick={() => { this.viewHistory(item.k) }}>
@@ -168,7 +179,87 @@ class AMInstanceView extends React.Component {
                 />
                 <Divider>报警数据</Divider>
                 <Timeline mode="left" items={alertData} />
+            </div>
+        );
+    }
 
+    renderPage = () => {
+        const { loading, showHistorydata, activeTab, ot, alertData, property } = this.state;
+        const { info } = this.props;
+        
+        // 检查是否为主机系统设备 (thing_model_id = 3)
+        const isMainEngineDevice = info.thing_model_id === 3;
+
+        if (showHistorydata) {
+            return (
+                <TIIoTHistory viewNav={this.viewNav} info={{ property, thing_id: info.id }} />
+            )
+        }
+
+        // 为主机设备渲染Tabs界面
+        if (isMainEngineDevice) {
+            const tabItems = [
+                {
+                    key: 'realtime',
+                    label: '实时数据',
+                    children: this.renderRealtimeContent(loading, ot, alertData)
+                },
+                {
+                    key: 'sfoc',
+                    label: 'SFOC分析',
+                    children: <SfocAnalysis info={{ thing_id: info.id }} />
+                },
+                {
+                    key: 'kmeans',
+                    label: 'K-means聚类',
+                    children: <KmeansAnalysis info={{ thing_id: info.id }} />
+                }
+            ];
+
+            return (
+                <div>
+                    <h2>查看设备</h2>
+                    <Divider />
+                    <Button onClick={this.back}>返回</Button>
+                    {loading && activeTab === 'realtime' ? <Spin style={{ marginLeft: '16px' }} /> : null}
+                    
+                    <Divider />
+                    <Tabs 
+                        activeKey={activeTab}
+                        onChange={this.onTabChange}
+                        items={tabItems}
+                    />
+                </div>
+            );
+        }
+
+        // 非主机设备保持原样
+        return (
+            <div>
+                <h2>查看设备</h2>
+                <Divider />
+                <Button onClick={this.back}>返回</Button>
+                {loading ? <Spin /> : null}
+
+                <Divider>实时数据</Divider>
+                <List
+                    grid={{
+                        gutter: 16,
+                        column: 4,
+                    }}
+                    dataSource={ot}
+                    renderItem={(item) => {
+                        return (
+                            <List.Item>
+                                <Card title={item.k} style={{ cursor: 'pointer' }} onClick={() => { this.viewHistory(item.k) }}>
+                                    <h3>{item.v}</h3>
+                                </Card>
+                            </List.Item>
+                        )
+                    }}
+                />
+                <Divider>报警数据</Divider>
+                <Timeline mode="left" items={alertData} />
             </div>
         )
 
@@ -186,4 +277,4 @@ class AMInstanceView extends React.Component {
 
 }
 
-export default AMInstanceView;
+export default TIIoTInstanceView;

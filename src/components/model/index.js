@@ -1,12 +1,12 @@
 import React from "react";
 
-import AMModelList from './query';
-import AMModelCreate from './create';
+import TIIoTModelList from './query';
+import TIIoTModelCreate from './create';
 
-class AMModel extends React.Component {
+class TIIoTModel extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { curPage: 'AMModelList', condition: '' };
+        this.state = { curPage: 'TIIoTModelList', condition: '' };
     }
 
     nav = (curPage) => {
@@ -16,17 +16,17 @@ class AMModel extends React.Component {
 
     renderPage = () => {
         switch (this.state.curPage) {
-            case 'AMModelCreate':
+            case 'TIIoTModelCreate':
                 this.props.setBreadcrumb([
                     '物模型',
                     '新增'
                 ]);
-                return (<AMModelCreate nav={this.nav} />);
+                return (<TIIoTModelCreate nav={this.nav} />);
             default:
                 this.props.setBreadcrumb([
                     '物模型'
                 ]);
-                return (<AMModelList nav={this.nav} />);
+                return (<TIIoTModelList nav={this.nav} />);
         }
 
     }
@@ -42,4 +42,4 @@ class AMModel extends React.Component {
 
 }
 
-export default AMModel;
+export default TIIoTModel;

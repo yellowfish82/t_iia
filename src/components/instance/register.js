@@ -9,7 +9,7 @@ const layout = {
     wrapperCol: { span: 12 },
 };
 
-class AMInstanceRgister extends React.Component {
+class TIIoTInstanceRgister extends React.Component {
     formRef = React.createRef();
 
     constructor(props) {
@@ -49,7 +49,7 @@ class AMInstanceRgister extends React.Component {
     }
 
     back = () => {
-        this.props.nav('AMInstanceList');
+        this.props.nav('TIIoTInstanceList');
     }
 
     onFinishFailed = (errorInfo) => {
@@ -154,4 +154,4 @@ class AMInstanceRgister extends React.Component {
 
 }
 
-export default AMInstanceRgister;
+export default TIIoTInstanceRgister;

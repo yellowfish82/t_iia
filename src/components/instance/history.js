@@ -7,7 +7,7 @@ import CONSTANT from '../../utilities/constant';
 
 const moment = require('moment');
 
-class AMHistory extends React.Component {
+class TIIoTHistory extends React.Component {
     constructor(props) {
         super(props);
         this.state = { loading: true };
@@ -235,4 +235,4 @@ class AMHistory extends React.Component {
 
 }
 
-export default AMHistory;
+export default TIIoTHistory;

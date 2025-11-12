@@ -73,6 +73,9 @@ const CONSTANT = {
   DATA_REALTIME_ORIGINAL: `/data/ot/rt/`,
   DATA_HISTORY_ORIGINAL: `/data/ot/history/`,
   DATA_ALERT: `/data/alert/`,
+  ANALYSIS_SFOC: `/analysis/sfoc/`,
+  ANALYSIS_K_MEANS: `/analysis/kmeans/`,
+  ANALYSIS_VESSEL_HEALTH_INDEX: `/analysis/vesselHealthIndex/`,
 }
 
 export default CONSTANT;

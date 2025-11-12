@@ -1,7 +1,7 @@
 import React from "react";
 import { Breadcrumb } from 'antd';
 
-class AMBreadcrumb extends React.Component {
+class TIIoTBreadcrumb extends React.Component {
     constructor(props) {
         super(props);
         this.state = {};
@@ -28,7 +28,7 @@ class AMBreadcrumb extends React.Component {
     }
 
     render() {
-        // console.log('AMBreadcrumb', this.props.breadcrumb);
+        // console.log('TIIoTBreadcrumb', this.props.breadcrumb);
         const breadcrumb = this.renderBreadscurmb();
 
         return (
@@ -40,4 +40,4 @@ class AMBreadcrumb extends React.Component {
 
 }
 
-export default AMBreadcrumb;
+export default TIIoTBreadcrumb;

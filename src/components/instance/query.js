@@ -4,7 +4,7 @@ import { Button, Table, Space, message } from 'antd';
 import hub from '../../utilities/hub';
 import CONSTANT from '../../utilities/constant';
 
-class AMInstanceList extends React.Component {
+class TIIoTInstanceList extends React.Component {
     constructor(props) {
         super(props);
         this.state = { loading: true };
@@ -61,7 +61,7 @@ class AMInstanceList extends React.Component {
 
     async componentDidMount() {
         try {
-            // console.log(`AMInstanceList componentDidMount`);
+            // console.log(`TIIoTInstanceList componentDidMount`);
             await this.query();
         } catch (error) {
             console.log(error);
@@ -89,12 +89,12 @@ class AMInstanceList extends React.Component {
     }
 
     register = () => {
-        this.props.nav('AMInstanceRgister', this.state.models);
+        this.props.nav('TIIoTInstanceRgister', this.state.models);
     }
 
     detail = (d) => {
-        // this.props.nav('AMInstanceView', this.state.curInstance);
-        this.props.nav('AMInstanceView', d);
+        // this.props.nav('TIIoTInstanceView', this.state.curInstance);
+        this.props.nav('TIIoTInstanceView', d);
     }
 
     renderPage = () => {
@@ -121,4 +121,4 @@ class AMInstanceList extends React.Component {
 
 }
 
-export default AMInstanceList;
+export default TIIoTInstanceList;

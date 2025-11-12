@@ -1,13 +1,13 @@
 import React from "react";
 
-import AMInstanceList from './query';
-import AMInstanceRgister from './register';
-import AMInstanceView from './view';
+import TIIoTInstanceList from './query';
+import TIIoTInstanceRgister from './register';
+import TIIoTInstanceView from './view';
 
-class AMInstance extends React.Component {
+class TIIoTInstance extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { curPage: 'AMModelList', condition: '' };
+        this.state = { curPage: 'TIIoTModelList', condition: '' };
     }
 
     nav = (curPage, info) => {
@@ -18,23 +18,23 @@ class AMInstance extends React.Component {
     renderPage = () => {
         const { info } = this.state;
         switch (this.state.curPage) {
-            case 'AMInstanceRgister':
+            case 'TIIoTInstanceRgister':
                 this.props.setBreadcrumb([
                     '物实例',
                     '注册'
                 ]);
-                return (<AMInstanceRgister nav={this.nav} info={info} />);
-            case 'AMInstanceView':
+                return (<TIIoTInstanceRgister nav={this.nav} info={info} />);
+            case 'TIIoTInstanceView':
                 this.props.setBreadcrumb([
                     '物实例',
                     info.name
                 ]);
-                return (<AMInstanceView setBreadcrumb={this.props.setBreadcrumb} nav={this.nav} info={info} />);
+                return (<TIIoTInstanceView setBreadcrumb={this.props.setBreadcrumb} nav={this.nav} info={info} />);
             default:
                 this.props.setBreadcrumb([
                     '物实例'
                 ]);
-                return (<AMInstanceList nav={this.nav} info={info} />);
+                return (<TIIoTInstanceList nav={this.nav} info={info} />);
         }
 
     }
@@ -50,4 +50,4 @@ class AMInstance extends React.Component {
 
 }
 
-export default AMInstance;
+export default TIIoTInstance;
