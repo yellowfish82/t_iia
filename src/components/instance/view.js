@@ -83,8 +83,8 @@ class TIIoTInstanceView extends React.Component {
             }
             // console.log('``````````````````````');
             return {
-                label: moment(ad.timestamp).format('YYYY-MM-DD HH:mm:ss SSS'),
-                children: `${ad.name}当前值：${payload[ad.name]} -- 报警条件： ${expressionMark} ${ad.threshold.toFixed(2)} `
+                label: moment(+ad.timestamp).format('YYYY-MM-DD HH:mm:ss SSS'),
+                children: `${ad.name}当前值：${payload[ad.name]} -- 报警条件： ${expressionMark} ${parseFloat(ad.threshold).toFixed(2)} `
             }
         });
         this.setState({ ot, alertData: ad, loading: false });
