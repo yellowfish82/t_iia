@@ -19,7 +19,14 @@ class AMModelCreate extends React.Component {
             alertCondition: [],
             showPropertyModal: false,
             showAlertModal: false,
+            curPType: undefined, // 当前属性类型
         };
+        
+        // 创建属性类型选项
+        this.propertyTypeOptions = Object.entries(CONSTANT.PROPERTY_TYPE).map(([key, value]) => ({
+            value: key,
+            label: `${value.label} (${value.unit})`
+        }));
     }
 
     back = () => {
@@ -29,7 +36,7 @@ class AMModelCreate extends React.Component {
     execute = async (values) => {
         console.log('保存物模型', values);
         try {
-            const { name, description } = values;
+            const { name, description, type } = values;
             const { properties, alertCondition } = this.state;
 
             let findIndex = -1;
@@ -47,6 +54,7 @@ class AMModelCreate extends React.Component {
                 name,
                 description,
                 properties,
+                type,
             };
             const resp = await hub.createThingModel(thingModel);
 
@@ -146,12 +154,22 @@ class AMModelCreate extends React.Component {
                                 <Button onClick={() => this.delProperty(i)}>删除</Button>
                                 <Divider />
                                 <ul>
-                                    <li>
-                                        最大值：{item.max}
-                                    </li>
-                                    <li>
-                                        最小值：{item.min}
-                                    </li>
+                                    {item.type ? (
+                                        <li>
+                                            类型：{CONSTANT.PROPERTY_TYPE[item.type] ? 
+                                                `${CONSTANT.PROPERTY_TYPE[item.type].label} (${CONSTANT.PROPERTY_TYPE[item.type].unit})` : 
+                                                item.type}
+                                        </li>
+                                    ) : (
+                                        <>
+                                            <li>
+                                                最大值：{item.max}
+                                            </li>
+                                            <li>
+                                                最小值：{item.min}
+                                            </li>
+                                        </>
+                                    )}
                                 </ul>
                             </Card>
                         </List.Item>
@@ -201,8 +219,22 @@ class AMModelCreate extends React.Component {
 
                 <Modal title="添加属性" open={showPropertyModal} onOk={this.handlePropertyOk} onCancel={this.handlePropertyCancel}>
                     <p>属性名称：<Input style={{ width: '80%' }} onChange={this.recordPropertyNameChange} value={curPName} /></p>
-                    <p>最大值：<InputNumber style={{ width: '80%' }} onChange={this.recordPropertyMaxChange} value={curPMax} /></p>
-                    <p>最小值：<InputNumber style={{ width: '80%' }} onChange={this.recordPropertyMinChange} value={curPMin} /></p>
+                    <p>属性类型：
+                        <Select
+                            style={{ width: '80%' }}
+                            onChange={this.recordPropertyTypeChange}
+                            allowClear
+                            options={this.propertyTypeOptions}
+                            value={this.state.curPType}
+                            placeholder="选择属性类型（可选）"
+                        />
+                    </p>
+                    {!this.state.curPType && (
+                        <>
+                            <p>最大值：<InputNumber style={{ width: '80%' }} onChange={this.recordPropertyMaxChange} value={curPMax} /></p>
+                            <p>最小值：<InputNumber style={{ width: '80%' }} onChange={this.recordPropertyMinChange} value={curPMin} /></p>
+                        </>
+                    )}
                 </Modal>
 
                 <Modal title="添加报警条件" open={showAlertModal} onOk={this.handleAlertOk} onCancel={this.handleAlertCancel}>
@@ -252,17 +284,39 @@ class AMModelCreate extends React.Component {
     showPropertyModal = () => this.setState({ showPropertyModal: true });
 
     handlePropertyOk = () => {
-        const { properties, curPName, curPMax, curPMin } = this.state;
-        properties.push({
+        const { properties, curPName, curPMax, curPMin, curPType } = this.state;
+        
+        // 创建新属性对象
+        const newProperty = {
             name: curPName,
-            max: curPMax,
-            min: curPMin,
-        });
+            type: curPType,
+        };
+        
+        // 如果没有选择类型，才添加最大值和最小值
+        if (!curPType) {
+            newProperty.max = curPMax;
+            newProperty.min = curPMin;
+        }
+        
+        properties.push(newProperty);
 
-        this.setState({ properties, showPropertyModal: false, curPName: undefined, curPMax: undefined, curPMin: undefined });
+        this.setState({ 
+            properties, 
+            showPropertyModal: false, 
+            curPName: undefined, 
+            curPMax: undefined, 
+            curPMin: undefined,
+            curPType: undefined
+        });
     }
 
-    handlePropertyCancel = () => this.setState({ showPropertyModal: false, curPName: undefined, curPMax: undefined, curPMin: undefined });
+    handlePropertyCancel = () => this.setState({ 
+        showPropertyModal: false, 
+        curPName: undefined, 
+        curPMax: undefined, 
+        curPMin: undefined,
+        curPType: undefined 
+    });
 
     delProperty = (i) => {
         console.log(i);
@@ -281,6 +335,10 @@ class AMModelCreate extends React.Component {
     recordPropertyMinChange = (v) => {
         console.log(v);
         this.setState({ curPMin: v });
+    }
+    recordPropertyTypeChange = (v) => {
+        console.log('Selected property type:', v);
+        this.setState({ curPType: v });
     }
 
 

@@ -16,6 +16,15 @@ class AMInstanceView extends React.Component {
     }
 
     async componentDidMount() {
+        // 立即执行一次查询
+        try {
+            await this.query();
+        } catch (error) {
+            console.error(error);
+            message.error(`${error}`);
+        }
+
+        // 启动定时器
         this.timer = setInterval(async () => {
             try {
                 await this.query();
@@ -24,6 +33,19 @@ class AMInstanceView extends React.Component {
                 message.error(`${error}`);
             }
         }, CONSTANT.REFRESH_FREQUENCY);
+    }
+
+    componentWillUnmount() {
+        // 组件卸载时清理定时器
+        this.clearTimer();
+    }
+
+    clearTimer = () => {
+        if (this.timer) {
+            clearInterval(this.timer);
+            this.timer = null;
+            console.log('Timer cleared');
+        }
     }
 
     query = async () => {
@@ -66,7 +88,9 @@ class AMInstanceView extends React.Component {
         let result = [];
         if (data) {
             const payload = JSON.parse(data.payload);
-            payload['timestamp'] = moment(data.timestamp).format('YYYY-MM-DD HH:mm:ss SSS');
+            payload['timestamp'] = moment(+data.timestamp).format('YYYY-MM-DD HH:mm:ss SSS');
+
+            // console.log(`ssssssssssssssss`);
 
             result = Object.keys(payload).map((k) => {
                 return {
@@ -79,19 +103,34 @@ class AMInstanceView extends React.Component {
     }
 
     back = () => {
-        clearInterval(this.timer);
+        this.clearTimer();
         this.props.nav('AMInstanceList');
     }
 
     viewHistory = (property) => this.viewNav(true, property);
 
     viewNav = (showHistorydata, property) => {
-        clearInterval(this.timer);
+        if (showHistorydata) {
+            // 进入历史数据页面时停止定时器
+            this.clearTimer();
+        } else {
+            // 返回实时数据页面时重新启动定时器
+            this.clearTimer(); // 先清理旧的
+            this.timer = setInterval(async () => {
+                try {
+                    await this.query();
+                } catch (error) {
+                    console.error(error);
+                    message.error(`${error}`);
+                }
+            }, CONSTANT.REFRESH_FREQUENCY);
+        }
         this.setState({ showHistorydata, property });
     }
 
     renderPage = () => {
         const { loading, showHistorydata, ot, alertData, property } = this.state;
+        // console.log(`====================================== item: ${JSON.stringify(ot)}`);
 
         if (showHistorydata) {
             return (
@@ -115,13 +154,17 @@ class AMInstanceView extends React.Component {
                         column: 4,
                     }}
                     dataSource={ot}
-                    renderItem={(item) => (
-                        <List.Item>
-                            <Card title={item.k} style={{ cursor: 'pointer' }} onClick={() => { this.viewHistory(item.k) }}>
-                                <h3>{item.v}</h3>
-                            </Card>
-                        </List.Item>
-                    )}
+                    renderItem={(item) => {
+                        // console.log(`====================================== item: ${JSON.stringify(item)}`);
+
+                        return (
+                            <List.Item>
+                                <Card title={item.k} style={{ cursor: 'pointer' }} onClick={() => { this.viewHistory(item.k) }}>
+                                    <h3>{item.v}</h3>
+                                </Card>
+                            </List.Item>
+                        )
+                    }}
                 />
                 <Divider>报警数据</Divider>
                 <Timeline mode="left" items={alertData} />
@@ -132,7 +175,7 @@ class AMInstanceView extends React.Component {
     }
 
     render() {
-        console.log(this.props.info);
+        // console.log(this.props.info);
         const page = this.renderPage();
         return (
             <div>
