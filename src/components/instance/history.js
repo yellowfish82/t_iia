@@ -27,7 +27,7 @@ class AMHistory extends React.Component {
             const yData = [];
 
             otData.forEach((d) => {
-                xData.push(moment(d.timestamp).format('YYYY-MM-DD HH:mm:ss SSS'));
+                xData.push(moment(+d.timestamp).format('YYYY-MM-DD HH:mm:ss SSS'));
                 const payload = JSON.parse(d.payload);
                 yData.push(payload[property]);
             });
