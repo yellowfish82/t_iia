@@ -120,8 +120,15 @@ class AMInstanceRgister extends React.Component {
                     <Form.Item
                         label="上数频率"
                         name="frequency"
+                        initialValue={2}
+                        tooltip="设备数据上报的频率，单位为秒"
                     >
-                        <InputNumber style={{ width: '90%', marginRight: '2px' }} />秒
+                        <InputNumber 
+                            style={{ width: '100%' }} 
+                            addonAfter="秒" 
+                            min={1}
+                            placeholder="默认为2秒"
+                        />
                     </Form.Item>
 
                     <Form.Item
