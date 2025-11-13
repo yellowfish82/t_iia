@@ -4,6 +4,8 @@ import ReactEcharts from 'echarts-for-react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
 import 'katex/dist/katex.min.css';
 
 import hub from '../../utilities/hub';
@@ -74,12 +76,18 @@ class KmeansAnalysis extends React.Component {
             xAxis: {
                 name: "转速 (RPM)",
                 min: Math.max(0, rpmMin - rpmBuffer),
-                max: rpmMax + rpmBuffer
+                max: rpmMax + rpmBuffer,
+                axisLabel: {
+                    formatter: (value) => Math.round(value)
+                }
             },
             yAxis: {
                 name: "功率 (MW)",
                 min: Math.max(0, powerMin - powerBuffer),
-                max: powerMax + powerBuffer
+                max: powerMax + powerBuffer,
+                axisLabel: {
+                    formatter: (value) => value.toFixed(1)
+                }
             },
             dataZoom: [
                 { type: "inside", xAxisIndex: 0 },
@@ -87,20 +95,23 @@ class KmeansAnalysis extends React.Component {
                 { type: "inside", yAxisIndex: 0 },
                 { type: "slider", yAxisIndex: 0 },
             ],
-            series: [
-                {
-                    name: "运行模式中心",
+            series: clusterAnalysis.map((cluster) => {
+                const modeName = cluster.mode?.status || `模式${cluster.clusterId}`;
+                const modeColor = cluster.mode?.color || '#1890ff';
+                
+                // 从centroids中找到对应的中心点数据
+                const centroidData = centroids[cluster.clusterId];
+                
+                return {
+                    name: modeName,
                     type: "scatter",
                     symbolSize: 14,
-                    data: scatterData.map((d) => [d.value[0], d.value[1]]),
+                    data: [[centroidData[0], centroidData[1], centroidData[2]]],
                     itemStyle: {
-                        color: (params) => {
-                            const colors = ["#2ecc71", "#3498db", "#f1c40f", "#e74c3c"];
-                            return colors[params.dataIndex % colors.length];
-                        },
-                    },
-                },
-            ],
+                        color: modeColor
+                    }
+                };
+            }),
         };
 
         const kmeansIndroduction = `
@@ -136,7 +147,7 @@ K-Means 是一种 **无监督学习算法**，通过反复迭代，将样本自�
     }
 
     generateClusterChartOption = (clusterAnalysis) => {
-        const colors = ["#2ecc71", "#3498db", "#f1c40f", "#e74c3c"];
+        // 不再使用固定颜色数组，而是使用后端返回的颜色
 
         // 计算所有数据点的范围
         let allRpmValues = [];
@@ -168,22 +179,25 @@ K-Means 是一种 **无监督学习算法**，通过反复迭代，将样本自�
 
         // 每个簇的散点
         clusterAnalysis.forEach((cluster, index) => {
+            const modeName = cluster.mode?.status || `模式${cluster.clusterId}`;
+            const modeColor = cluster.mode?.color || '#1890ff';
+            
             series.push({
-                name: `Cluster ${cluster.clusterId} - ${cluster.mode}`,
+                name: `${modeName}`,
                 type: 'scatter',
                 symbolSize: 12,
                 data: cluster.data, // 只包含 [rpm, power]
-                itemStyle: { color: colors[index % colors.length] }
+                itemStyle: { color: modeColor }
             });
 
             // 簇中心
             series.push({
-                name: `Center ${cluster.clusterId} - ${cluster.mode}`,
+                name: `${modeName} (中心点)`,
                 type: 'scatter',
                 symbolSize: 20,
                 data: [[cluster.avgRpm, cluster.avgPower]],
                 itemStyle: {
-                    color: colors[index % colors.length],
+                    color: modeColor,
                     borderColor: '#000',
                     borderWidth: 2
                 },
@@ -211,12 +225,18 @@ K-Means 是一种 **无监督学习算法**，通过反复迭代，将样本自�
             xAxis: {
                 name: '转速 (RPM)',
                 min: Math.max(0, rpmMin - rpmBuffer),
-                max: rpmMax + rpmBuffer
+                max: rpmMax + rpmBuffer,
+                axisLabel: {
+                    formatter: (value) => Math.round(value)
+                }
             },
             yAxis: {
                 name: '功率 (MW)',
                 min: Math.max(0, powerMin - powerBuffer),
-                max: powerMax + powerBuffer
+                max: powerMax + powerBuffer,
+                axisLabel: {
+                    formatter: (value) => value.toFixed(1)
+                }
             },
             dataZoom: [
                 { type: 'inside', xAxisIndex: 0 },
@@ -373,6 +393,17 @@ $$
 
 ---
 
+### 🎯 运行模式定义
+
+| 颜色 | 模式 |  判定条件 | 含义 |
+|:------:|:------:|:----------|:------|
+| <span style="color: #d9d9d9">●</span> | **待机/低速** | RPM < 400 ∧ Power < 3 ∧ FuelFlow < 50 | 靠泊或低速运行 |
+| <span style="color: #52c41a">●</span> | **经济巡航** | 400 ≤ RPM < 650 ∧ 3 ≤ Power < 5 ∧ FuelFlow < 100 | 平稳、高效 |
+| <span style="color: #faad14">●</span> | **普通巡航** | 650 ≤ RPM < 800 ∧ 5 ≤ Power < 7 ∧ FuelFlow < 180 | 能耗正常 |
+| <span style="color: #ff4d4f">●</span> | **高负载** | RPM ≥ 800 ∨ Power ≥ 7 ∨ FuelFlow ≥ 180 | 潜在效率下降 |
+
+---
+
 ### 运行模式分布分析
 
 `;
@@ -380,7 +411,7 @@ $$
         // 按优先级排序分析各模式
         if (economicMode) {
             conclusion += `
-**经济巡航模式**
+**🟢 经济巡航模式**
 - 占比：**${economicMode.percentage}%**
 - 评估：✅ 整体航行以中低速节能工况为主，燃油经济性良好
 - 建议：继续保持此运行模式，有利于降低运营成本
@@ -390,10 +421,10 @@ $$
 
         if (normalMode) {
             conclusion += `
-**🟡 普通巡航模式**  
+**🟡 普通巡航模式**
 - 占比：**${normalMode.percentage}%**
 - 评估：⚠️ 常规负载运行，能耗在正常范围内
-- 建议：可通过航速优化进一步提升燃油经济性
+- 建议：可通过航速调整进一步提升燃油经济性
 
 `;
         }
@@ -402,11 +433,8 @@ $$
             conclusion += `
 **🔴 高负载模式**
 - 占比：**${highLoadMode.percentage}%**
-- 评估：⚠️ **需要关注** - 高能耗运行状态
-- 建议：
-  - 检查螺旋桨推进效率
-  - 评估负载匹配情况  
-  - 考虑调整航行策略以降低能耗
+- 评估：⚠️ 高能耗状态，存在潜在效率下降风险
+- 建议：检查螺旋桨推进效率和负载匹配情况
 
 `;
         }
@@ -415,8 +443,8 @@ $$
             conclusion += `
 **⚪ 待机/低速模式**
 - 占比：**${standbyMode.percentage}%**
-- 评估：✅ 港口作业或低速航行，能耗最低
-- 建议：适合靠泊和港口作业场景
+- 评估：✅ 靠泊或低速运行状态，能耗处于最低水平
+- 建议：适合港口作业，可利用此时间进行设备维护
 
 `;
         }
@@ -471,8 +499,8 @@ $$
         const tooltipContent = (
             <ReactMarkdown
                 children={kmeansIndroduction}
-                remarkPlugins={[remarkMath]}
-                rehypePlugins={[rehypeKatex]}
+                remarkPlugins={[remarkMath, remarkGfm]}
+                rehypePlugins={[rehypeKatex, rehypeRaw]}
             />
         );
 
@@ -498,21 +526,21 @@ $$
                     </div>
                 ) : kmeansData ? (
                     <Row gutter={[16, 16]}>
-                        <Col span={7}>
+                        <Col span={6}>
                             <Card style={{ height: '100%' }}>
                                 <ReactMarkdown
                                     children={kmeansAnalysisReport}
-                                    remarkPlugins={[remarkMath]}
-                                    rehypePlugins={[rehypeKatex]}
+                                    remarkPlugins={[remarkMath, remarkGfm]}
+                                    rehypePlugins={[rehypeKatex, rehypeRaw]}
                                 />
                             </Card>
                         </Col>
-                        <Col span={7}>
+                        <Col span={8}>
                             <Card style={{ height: '100%' }}>
                                 <ReactMarkdown
                                     children={kmeansConclusion}
-                                    remarkPlugins={[remarkMath]}
-                                    rehypePlugins={[rehypeKatex]}
+                                    remarkPlugins={[remarkMath, remarkGfm]}
+                                    rehypePlugins={[rehypeKatex, rehypeRaw]}
                                 />
                             </Card>
                         </Col>
