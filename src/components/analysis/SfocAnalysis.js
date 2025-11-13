@@ -1,5 +1,5 @@
 import React from "react";
-import { Button, message, Spin, Card, Row, Col, Typography, Tag, Table } from 'antd';
+import { message, Spin, Card, Row, Col } from 'antd';
 import ReactEcharts from 'echarts-for-react';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -8,8 +8,6 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
 import hub from '../../utilities/hub';
-
-const { Title, Paragraph } = Typography;
 
 class SfocAnalysis extends React.Component {
     constructor(props) {
@@ -173,21 +171,18 @@ class SfocAnalysis extends React.Component {
         const sfocRange = maxSfoc - minSfoc;
         const avgRpm = scatterData.reduce((a, [rpm]) => a + rpm, 0) / scatterData.length;
 
-        let status = "normal";
         const insights = [];
 
         // --- 整体水平判断 ---
         let levelText = "";
         if (avgSfoc < 170) {
             levelText = "💎 **效率极佳**（优于行业平均）";
-            status = "excellent";
         } else if (avgSfoc < 190) {
             levelText = "🟢 **效率良好**";
         } else if (avgSfoc < 210) {
             levelText = "🟡 **效率中等**";
         } else {
             levelText = "🔴 **效率偏低**（需关注燃油系统或推进效率）";
-            status = "warning";
         }
 
         // --- 波动分析 ---
@@ -379,7 +374,6 @@ $$SFOC = \\frac{\\dot{m}_f \\times 1000}{P_b}$$
 
     render() {
         const { loading, option, sfocData } = this.state;
-        const { Title, Text } = Typography;
 
         let sfocReports = null;
         if (sfocData) sfocReports = this.generateSfocReport(sfocData);
@@ -387,7 +381,7 @@ $$SFOC = \\frac{\\dot{m}_f \\times 1000}{P_b}$$
         return (
             <div>
                 <Card
-                    title="燃油效率分析 (SFOC)"
+                    title="燃油效率分析 (SFOC) - 回归拟合算法"
                     style={{ margin: '16px 0' }}
                 >
                     <Row gutter={16}>
