@@ -1,26 +1,36 @@
 import React from "react";
-import { Button, message, Spin, Card } from 'antd';
+import { Button, message, Spin, Card, Row, Col, Typography, Tag, Table } from 'antd';
 import ReactEcharts from 'echarts-for-react';
+import ReactMarkdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import remarkGfm from 'remark-gfm';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 import hub from '../../utilities/hub';
+
+const { Title, Paragraph } = Typography;
 
 class SfocAnalysis extends React.Component {
     constructor(props) {
         super(props);
-        this.state = { loading: true, option: null };
+        this.state = {
+            loading: true,
+            option: null,
+            sfocData: null
+        };
     }
 
     async componentDidMount() {
         try {
             this.setState({ loading: true });
             const { thing_id } = this.props.info;
-            
+
             // 调用SFOC分析接口
-            const sfocData = await hub.sfoc(thing_id);
-            console.log('SFOC分析数据:', sfocData);
-            
-            const option = this.assembleSfocOptions(sfocData);
-            this.setState({ loading: false, option });
+            const { sfoc } = await hub.sfoc(thing_id);
+
+            const option = this.assembleSfocOptions(sfoc);
+            this.setState({ loading: false, option, sfocData: sfoc });
 
         } catch (error) {
             console.log(error);
@@ -34,9 +44,11 @@ class SfocAnalysis extends React.Component {
         // { 
         //   scatterData: [[rpm, sfoc], ...], 
         //   lineData: [[rpm, sfoc], ...],
-        //   statistics: { avgSfoc, minSfoc, maxSfoc }
+        //   statistics: { avgSfoc, minSfoc, maxSfoc, minRpm, maxRpm }
         // }
-        
+
+        // console.log('assembleSfocOptions:', data);
+
         const option = {
             title: {
                 text: '燃油效率分析 (SFOC)',
@@ -78,6 +90,20 @@ class SfocAnalysis extends React.Component {
                 name: '主机转速 (rpm)',
                 nameLocation: 'middle',
                 nameGap: 30,
+                min: function (value) {
+                    // 计算数据范围
+                    const dataRange = value.max - value.min;
+                    // 让数据占80%，左右各留10%的空间
+                    const padding = dataRange * 0.1 / 0.8;
+                    return Math.max(0, value.min - padding);
+                },
+                max: function (value) {
+                    // 计算数据范围
+                    const dataRange = value.max - value.min;
+                    // 让数据占80%，左右各留10%的空间
+                    const padding = dataRange * 0.1 / 0.8;
+                    return value.max + padding;
+                },
                 axisLabel: {
                     formatter: '{value}'
                 }
@@ -87,6 +113,20 @@ class SfocAnalysis extends React.Component {
                 name: 'SFOC (g/kWh)',
                 nameLocation: 'middle',
                 nameGap: 50,
+                min: function (value) {
+                    // 计算数据范围
+                    const dataRange = value.max - value.min;
+                    // 让数据占80%，上下各留10%的空间
+                    const padding = dataRange * 0.1 / 0.8;
+                    return Math.max(0, value.min - padding);
+                },
+                max: function (value) {
+                    // 计算数据范围
+                    const dataRange = value.max - value.min;
+                    // 让数据占80%，上下各留10%的空间
+                    const padding = dataRange * 0.1 / 0.8;
+                    return value.max + padding;
+                },
                 axisLabel: {
                     formatter: '{value}'
                 }
@@ -125,34 +165,279 @@ class SfocAnalysis extends React.Component {
         return option;
     }
 
+    generateSfocReport = (sfocResult) => {
+        console.log('generateSfocReport:', sfocResult);
+        const { scatterData, statistics } = sfocResult;
+        const { avgSfoc, minSfoc, maxSfoc } = statistics;
+
+        const sfocRange = maxSfoc - minSfoc;
+        const avgRpm = scatterData.reduce((a, [rpm]) => a + rpm, 0) / scatterData.length;
+
+        let status = "normal";
+        const insights = [];
+
+        // --- 整体水平判断 ---
+        let levelText = "";
+        if (avgSfoc < 170) {
+            levelText = "💎 **效率极佳**（优于行业平均）";
+            status = "excellent";
+        } else if (avgSfoc < 190) {
+            levelText = "🟢 **效率良好**";
+        } else if (avgSfoc < 210) {
+            levelText = "🟡 **效率中等**";
+        } else {
+            levelText = "🔴 **效率偏低**（需关注燃油系统或推进效率）";
+            status = "warning";
+        }
+
+        // --- 波动分析 ---
+        if (sfocRange > 50) {
+            insights.push("SFOC波动较大，说明推进系统负载或燃油供应存在不稳定因素。");
+        } else if (sfocRange < 20) {
+            insights.push("SFOC波动较小，运行稳定性良好。");
+        }
+
+        // --- 区间表现 ---
+        const lowRpmSfoc = scatterData.filter(([rpm]) => rpm < avgRpm * 0.8).map(([, sfoc]) => sfoc);
+        const highRpmSfoc = scatterData.filter(([rpm]) => rpm > avgRpm * 1.2).map(([, sfoc]) => sfoc);
+
+        const avgLow = lowRpmSfoc.length ? lowRpmSfoc.reduce((a, b) => a + b, 0) / lowRpmSfoc.length : avgSfoc;
+        const avgHigh = highRpmSfoc.length ? highRpmSfoc.reduce((a, b) => a + b, 0) / highRpmSfoc.length : avgSfoc;
+
+        if (avgLow > avgSfoc * 1.1) {
+            insights.push("低转速区间 ($rpm < 0.8\\\\bar{r}$) 下 SFOC 偏高，可能存在推进系统匹配或喷油延迟问题。");
+        }
+        if (avgHigh > avgSfoc * 1.1) {
+            insights.push("高转速区间 ($rpm > 1.2\\\\bar{r}$) 下 SFOC 偏高，可能存在负载过高或温控问题。");
+        }
+
+        // --- 分析结果分成三个部分 ---
+        const statisticsMarkdown = `| 指标 | 数值 | 单位 |
+|:------|------:|:------:|
+| 平均转速 $\\bar{r}$ | ${avgRpm.toFixed(1)} | rpm |
+| 平均SFOC $\\bar{S}$ | ${avgSfoc.toFixed(1)} | g/kWh |
+| 最小SFOC | ${minSfoc.toFixed(1)} | g/kWh |
+| 最大SFOC | ${maxSfoc.toFixed(1)} | g/kWh |
+| 波动范围 | ${sfocRange.toFixed(1)} | g/kWh |`;
+
+        const conclusionMarkdown = `${levelText}`;
+
+        const insightsMarkdown = `${insights.map((t, i) => `- ${t}`).join("\n\n")}${insights.length === 0 ? '运行状态稳定，未发现明显效率异常。' : ''}`;
+
+        // --- 右侧固定内容 ---
+        const formulaMarkdown = `## 关于 SFOC
+
+**燃油效率（SFOC, Specific Fuel Oil Consumption）** 是衡量船舶主机系统燃油经济性的核心指标，表示单位功率输出所消耗的燃油量。
+
+### 计算公式
+
+$$SFOC = \\frac{\\dot{m}_f \\times 1000}{P_b}$$
+
+**参数说明：**
+- $\\dot{m}_f$ : 燃油流量 (kg/h)  
+- $P_b$ : 主机功率 (kW)  
+- **单位**：g/kWh
+
+### 评估标准
+
+| SFOC 范围 | 效率等级 | 说明 |
+|:---------|:--------:|:-----|
+| < 170 | 💎 优秀 | 燃油效率极佳，优于行业平均 |
+| 170-190 | 🟢 良好 | 燃油效率良好 |
+| 190-210 | 🟡 中等 | 燃油效率一般 |
+| > 210 | 🔴 偏低 | 需关注燃油系统或推进效率 |
+
+### 影响因素
+
+- **主机负载**：负载变化直接影响燃油消耗率
+- **转速匹配**：不同转速区间的效率表现
+- **燃油系统**：喷油时机、燃油品质等
+- **推进效率**：螺旋桨与主机的匹配程度
+`;
+
+        const markdownStyle = {
+            '& table': {
+                width: '100%',
+                borderCollapse: 'collapse',
+                marginBottom: '16px'
+            },
+            '& th, & td': {
+                padding: '12px 16px',
+                borderBottom: '1px solid #f0f0f0'
+            },
+            '& th': {
+                backgroundColor: '#fafafa',
+                fontWeight: 'bold'
+            }
+        };
+
+        const tableComponents = {
+            table: ({ node, ...props }) => (
+                <table style={{
+                    width: '100%',
+                    borderCollapse: 'collapse',
+                    marginBottom: '16px',
+                }} {...props} />
+            ),
+            th: ({ node, ...props }) => (
+                <th style={{
+                    padding: '12px 16px',
+                    backgroundColor: '#fafafa',
+                    fontWeight: 'bold',
+                    borderBottom: '2px solid #d9d9d9',
+                    textAlign: props.align || 'left'
+                }} {...props} />
+            ),
+            td: ({ node, ...props }) => (
+                <td style={{
+                    padding: '12px 16px',
+                    borderBottom: '1px solid #f0f0f0',
+                    textAlign: props.align || 'left'
+                }} {...props} />
+            )
+        };
+
+        const statisticsCardStyle = {
+            height: '320px', // 增加高度以显示完整表格
+            overflow: 'auto'
+        };
+
+        const smallCardStyle = {
+            height: '150px', // 较小高度适合结论和特征分析
+            overflow: 'auto'
+        };
+
+        const statisticsBodyStyle = {
+            height: 'calc(100% - 38px)',
+            overflow: 'auto',
+            padding: '16px'
+        };
+
+        const smallBodyStyle = {
+            height: 'calc(100% - 37px)',
+            overflow: 'auto',
+            padding: '16px'
+        };
+
+        return {
+            statistics: (
+                <Card title="指标统计" size="small" style={statisticsCardStyle} bodyStyle={statisticsBodyStyle}>
+                    <div style={markdownStyle}>
+                        <ReactMarkdown
+                            remarkPlugins={[remarkMath, remarkGfm]}
+                            rehypePlugins={[rehypeKatex]}
+                            components={tableComponents}
+                        >
+                            {statisticsMarkdown}
+                        </ReactMarkdown>
+                    </div>
+                </Card>
+            ),
+            conclusion: (
+                <Card title="整体结论" size="small" style={smallCardStyle} bodyStyle={smallBodyStyle}>
+                    <div style={markdownStyle}>
+                        <ReactMarkdown
+                            remarkPlugins={[remarkMath, remarkGfm]}
+                            rehypePlugins={[rehypeKatex]}
+                            components={tableComponents}
+                        >
+                            {conclusionMarkdown}
+                        </ReactMarkdown>
+                    </div>
+                </Card>
+            ),
+            insights: (
+                <Card title="运行特征分析" size="small" style={smallCardStyle} bodyStyle={smallBodyStyle}>
+                    <div style={markdownStyle}>
+                        <ReactMarkdown
+                            remarkPlugins={[remarkMath, remarkGfm]}
+                            rehypePlugins={[rehypeKatex]}
+                            components={tableComponents}
+                        >
+                            {insightsMarkdown}
+                        </ReactMarkdown>
+                    </div>
+                </Card>
+            ),
+            formulaInfo: (
+                <Card title="SFOC 介绍" size="small">
+                    <div style={markdownStyle}>
+                        <ReactMarkdown
+                            remarkPlugins={[remarkMath, remarkGfm]}
+                            rehypePlugins={[rehypeKatex]}
+                            components={tableComponents}
+                        >
+                            {formulaMarkdown}
+                        </ReactMarkdown>
+                    </div>
+                </Card>
+            )
+        };
+
+    }
+
+
     render() {
-        const { loading, option } = this.state;
-        
+        const { loading, option, sfocData } = this.state;
+        const { Title, Text } = Typography;
+
+        let sfocReports = null;
+        if (sfocData) sfocReports = this.generateSfocReport(sfocData);
+
         return (
             <div>
-                <Card 
-                    title="燃油效率分析 (SFOC)" 
+                <Card
+                    title="燃油效率分析 (SFOC)"
                     style={{ margin: '16px 0' }}
                 >
-                    {loading ? (
-                        <div style={{ textAlign: 'center', padding: '50px' }}>
-                            <Spin size="large" />
-                            <p style={{ marginTop: '16px' }}>正在分析燃油效率数据...</p>
-                        </div>
-                    ) : option ? (
-                        <ReactEcharts
-                            option={option}
-                            style={{ height: '500px', width: '100%' }}
-                            className="sfoc-analysis-chart"
-                            notMerge={true}
-                            lazyUpdate={true}
-                            opts={{ renderer: 'canvas' }}
-                        />
-                    ) : (
-                        <div style={{ textAlign: 'center', padding: '50px' }}>
-                            <p>暂无数据</p>
-                        </div>
-                    )}
+                    <Row gutter={16}>
+                        {/* 左侧：当前SFOC分析 */}
+                        <Col span={16}>
+                            {/* 第一行：分析卡片 */}
+                            <Row gutter={16} style={{ marginBottom: '16px' }}>
+                                <Col span={10}>
+                                    {sfocReports && sfocReports.conclusion}
+                                    <br />
+                                    {sfocReports && sfocReports.insights}
+                                </Col>
+                                <Col span={14}>
+                                    {sfocReports && sfocReports.statistics}
+                                </Col>
+                            </Row>
+
+                            {/* 第二行：图表 */}
+                            <Row>
+                                <Col span={24}>
+                                    {loading ? (
+                                        <div style={{ textAlign: 'center', padding: '50px' }}>
+                                            <Spin size="large" />
+                                            <p style={{ marginTop: '16px' }}>正在分析燃油效率数据...</p>
+                                        </div>
+                                    ) : option ? (
+                                        <Card bordered={false} bodyStyle={{ padding: '16px' }}>
+                                            <ReactEcharts
+                                                option={option}
+                                                style={{ height: '400px', width: '100%' }}
+                                                className="sfoc-analysis-chart"
+                                                notMerge={true}
+                                                lazyUpdate={true}
+                                                opts={{ renderer: 'canvas' }}
+                                            />
+                                        </Card>
+                                    ) : (
+                                        <div style={{ textAlign: 'center', padding: '50px' }}>
+                                            <p>暂无数据</p>
+                                        </div>
+                                    )}
+                                </Col>
+                            </Row>
+                        </Col>
+
+                        {/* 右侧：SFOC介绍 */}
+                        <Col span={8}>
+                            {sfocReports && sfocReports.formulaInfo}
+                        </Col>
+                    </Row>
                 </Card>
             </div>
         );
